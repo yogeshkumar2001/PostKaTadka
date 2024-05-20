@@ -1,15 +1,24 @@
 import './App.css';
-import 'flowbite';
+// import 'flowbite';
 function App() {
+  function drawerHandler() {
+    console.log("ejwfbewkjf")
+    const sidebar = document.getElementById("default-sidebar");
+    sidebar.classList.toggle("transform-none");
+    sidebar.classList.toggle("-translate-x-full");
+    sidebar.classList.toggle("drawer_width");
+  }
+  let isMobile = window.matchMedia("(max-width:500px)");
   return (
-    <div className="container h-screen max-h-screen overflow-y-scroll flex bg-black">
-      <div style={{ zIndex: 50 }}>
+    <div className="container h-screen max-h-screen flex bg-black">
+      {isMobile && <div className="h-fit absolute w-full bg-gray-900" style={{ zIndex: 50 }}>
         <button
           data-drawer-target="default-sidebar"
           data-drawer-toggle="default-sidebar"
           aria-controls="default-sidebar"
           type="button"
           className="inline-flex items-center p-2 mt-2 ms-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+          onClick={drawerHandler}
         >
           <span className="sr-only">Open sidebar</span>
           <svg
@@ -26,13 +35,14 @@ function App() {
             ></path>
           </svg>
         </button>
-      </div>
+      </div>}
 
       <aside
         id="default-sidebar"
-        className="fixed  top-0 left-0 z-40 h-screen dark:bg-gray-800 transition-transform -translate-x-full sm:translate-x-0"
+        className="fixed mt-12 top-0 left-0 z-40 h-screen dark:bg-gray-800 transition-transform -translate-x-full sm:translate-x-0"
         aria-label="Sidebar"
-        style={{ width: "25%" }}>
+        style={{width: '25%'}}
+      >
         <div className="h-full px-3 py-4 overflow-y-auto text-white bg-gray-800 dark:bg-gray-800">
           <h1 className="text-4xl text-white inline-block text-transparent bg-clip-text ml-4">PostKaTadka</h1>
           <form className="max-w-sm mx-auto flex flex-col space-y-3 p-5">
@@ -112,17 +122,17 @@ function App() {
           </form>
         </div>
       </aside>
-      <div className="h-full bg-black" style={{ width: '33%' }}></div>
+     {!isMobile &&  <div className="h-full bg-black" style={{ width: '33%' }}></div>}
       <div className="bg-black" style={{ width: '100%' }}>
-
-        {/* <div className="flex items-center flex-col space-y-10">
+        {/* 
+        <div className="flex items-center flex-col h-full justify-center px-4">
           <h1 className="text-7xl bg-gradient-to-br from-green-400 to-blue-600 inline-block text-transparent bg-clip-text">
             Har Post Mein Thoda Tadka
           </h1>
           <h2 className="text-6xl text-gray-600">How can I help you today?</h2>
         </div> */}
         <div>
-          <div className="container flex flex-col items-center justify-center bg-black mx-auto">
+          <div className="container max-h-screen overflow-y-scroll w-screen flex flex-col mt-10 items-center bg-black mx-auto">
             <div style={{ width: '80%' }}>
               <div className="flex pt-4">
                 <span className="flex justify-center items-center w-10">
@@ -212,21 +222,7 @@ function App() {
                   quas. Magnam non cumque necessitatibus doloribus, reprehenderit quasi aspernatur accusantium aliquam
                   saepe possimus corporis optio deleniti nisi nihil tempora vero, neque ea? Maiores quidem dolor,
                   explicabo, veniam sit, illo tenetur eligendi corrupti perspiciatis nobis reiciendis! Numquam, fugit
-                  dolore nisi cupiditate eius repellat ut, aliquam sit non dolorem id deserunt laudantium reiciendis
-                  iusto earum libero elorem100 Lorem ipsum, dolor sit amet consectetur adipisicing elit. Beatae id odit
-                  iste numquam dolorem eos dolores tempora neque similique reprehenderit? Vel assumenda provident
-                  eligendi veritatis commodi quas nam iste earum beatae! Nihil ratione possimus, corrupti accusantium
-                  perspiciatis tempora natus est ad eaque vel dolore, dicta ipsa sequi cumque quae doloribus sed itaque
-                  rem consequuntur commodi odio ipsum vero? Tenetur dolore cum sed, incidunt, at perspiciatis totam,
-                  illum consectetur voluptatibus blanditiis provident dolorem vel expedita laborum officia quos est.
-                  Odit illo id corrupti minus a ullam adipisci ab cumque voluptatum laborum dignissimos quidem delectus
-                  veniam, quisquam praesentium? Itaque totam impedit sint. ligendi aspernatur voluptatibus debitis
-                  dolorum dicta eum quod nulla. Animi voluptas hic ducimus, molestias, doloremque ab repellendus
-                  obcaecati fugit repudiandae, deleniti qui quia consequatur. Voluptatem repudiandae temporibus corrupti
-                  obcaecati itaque quos ipsa atque deserunt maxime laudantium voluptatum tempora alias, asperiores
-                  suscipit aliquid? Minus aperiam impedit, nihil corrupti dolorum nisi nobis ad tenetur facere
-                  cupiditate suscipit numquam sed distinctio voluptatem ipsa facilis dicta maxime dignissimos
-                  perferendis ab? Quasi eligendi beatae maiores modi.
+                  dolore nisi cupiditate eius repellat ut, aliquam sit non dolorem id deserunt laudantium reiciendis.
                 </p>
               </div>
             </div>
