@@ -1,14 +1,85 @@
 import './App.css';
 // import 'flowbite';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { useState } from 'react';
+import { unmountComponentAtNode } from 'react-dom';
+
 function App() {
+  const [error, setError] = useState(false);
+  const [loader, setLoader] = useState(false);
+  const [data, setData] = useState(null);
   function drawerHandler() {
-    console.log("ejwfbewkjf")
     const sidebar = document.getElementById("default-sidebar");
     sidebar.classList.toggle("transform-none");
     sidebar.classList.toggle("-translate-x-full");
     sidebar.classList.toggle("drawer_width");
   }
-  let isMobile = window.matchMedia("(max-width:500px)");
+  let isMobile = window.matchMedia("(max-width:500px)").matches;
+  const genAI = new GoogleGenerativeAI('AIzaSyA5nDwNViW_DRoZqQ4N33MAtBXrMWv4Cds');
+  async function run(formData) {
+    if(document.getElementById('chat-response')){
+      document.getElementById('chat-response').innerHTML = '';
+    }
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const linesObj = {
+        "Very Short": "1-2 lines",
+        "Short": "3-4 lines",
+        "Medium": "6-7 lines",
+        "Large": "10 lines",
+        "Extra Large": "more than 13 lines",
+      }
+      const prompt = `write ${formData["post-length"]} atleast ${linesObj[formData["post-length"]]} para on a ${formData["use-case"]} for me on topic (${formData["topic"]}) in a ${formData["post-tone"]} tone. (do not generate heading, subheading  and bullets points in response , i just want simple plain text response)`
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      renderResponse(text)
+    }
+    catch (error) {
+      console.error('Error generating trip plan:', error);
+    }
+  }
+  function renderResponse(response) {
+    console.log(response)
+    // const container = document.getElementById('chat-response');
+    // const lines = response.trim().split('\n');
+    // document.getElementById('chat-response').innerHTML = '';
+    setLoader(false);
+    let i = 0;
+
+    let sId = setInterval(() => {
+      document.getElementById('chat-response').innerHTML += response.charAt(i);
+      i++;
+      if (i == response.length) {
+        clearInterval(sId);
+      }
+    }, 5)
+  }
+  function formSubmitHandler(e) {
+    e.preventDefault();
+    
+    let formData = new FormData(e.target);
+
+    let formObj = {};
+
+    for (let [key, value] of formData) {
+      formObj[key] = value;
+    }
+    if (formObj["post-length"] == undefined || formObj["use-case"] == undefined || formObj["topic"] == undefined || formObj["post-tone"] == undefined) {
+      setError(true);
+      setTimeout(() => {
+        setError(false)
+      }, 3000)
+      return;
+    }
+    if(isMobile){
+      drawerHandler();
+    }
+    setLoader(true);
+    setData(formObj)
+    run(formObj);
+  }
+  console.log(loader)
   return (
     <div className="container h-screen max-h-screen flex bg-black">
       {isMobile && <div className="h-fit absolute w-full bg-gray-900" style={{ zIndex: 50 }}>
@@ -20,7 +91,6 @@ function App() {
           className="inline-flex items-center p-2 mt-2 ms-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
           onClick={drawerHandler}
         >
-          <span className="sr-only">Open sidebar</span>
           <svg
             className="w-6 h-6"
             aria-hidden="true"
@@ -39,34 +109,42 @@ function App() {
 
       <aside
         id="default-sidebar"
-        className="fixed mt-12 top-0 left-0 z-40 h-screen dark:bg-gray-800 transition-transform -translate-x-full sm:translate-x-0"
+        className={`fixed ${isMobile ? 'mt-12' : ''} top-0 left-0 z-40 h-screen dark:bg-gray-800 transition-transform -translate-x-full sm:translate-x-0`}
         aria-label="Sidebar"
-        style={{width: '25%'}}
+        style={{ width: '25%' }}
       >
+        {error && <div class="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4" role="alert">
+          {/* <p class="font-bold">Be Warned</p> */}
+          <p>Please fill all the details</p>
+        </div>}
         <div className="h-full px-3 py-4 overflow-y-auto text-white bg-gray-800 dark:bg-gray-800">
           <h1 className="text-4xl text-white inline-block text-transparent bg-clip-text ml-4">PostKaTadka</h1>
-          <form className="max-w-sm mx-auto flex flex-col space-y-3 p-5">
+          <form className="max-w-sm mx-auto flex flex-col space-y-3 p-5" onSubmit={(e) => { formSubmitHandler(e) }}>
             <label htmlFor="use-case" className="block text-white mb-2 text-base font-medium text-white text-gray-900 dark:text-white">
               Select Use case
             </label>
             <select
               id="use-case"
+              name="use-case"
               className="block w-full px-4 py-3 text-base text-gray-900 border border-gray-300 rounded-lg bg-gray-800 text-white focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              required
             >
               <option selected disabled>
                 Choose case
               </option>
-              <option value="US">LinkedIn Post</option>
-              <option value="CA">Instagram Caption</option>
-              <option value="FR">Twitter Post</option>
-              <option value="DE">Facebook Post</option>
+              <option value="LinkedIn Post">LinkedIn Post</option>
+              <option value="Instagram Caption">Instagram Caption</option>
+              <option value="Twitter Post">Twitter Post</option>
+              <option value="Facebook Post">Facebook Post</option>
             </select>
             <label htmlFor="post-tone" className="text-white block mb-2 text-base font-medium text-gray-900 dark:text-white">
               Select post tone
             </label>
             <select
               id="post-tone"
+              name="post-tone"
               className="block w-full px-4 py-3 text-base text-gray-900 border border-gray-300 rounded-lg bg-gray-800 text-white focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              required
             >
               <option selected disabled>
                 Choose Tone
@@ -88,7 +166,9 @@ function App() {
             </label>
             <select
               id="post-length"
+              name="post-length"
               className="block text-white w-full px-4 py-3 text-base text-gray-900 border border-gray-300 rounded-lg bg-gray-800 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              required
             >
               <option selected disabled>
                 Choose Length
@@ -106,15 +186,17 @@ function App() {
               <input
                 type="text"
                 id="topic"
+                required
+                name="topic"
                 placeholder='Topic'
                 className="text-white bg-gray-800 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               />
               <p id="helper-text-explanation" className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                Detailed information will result in great suggestions
+                Detailed information will result in great suggestions.
               </p>
             </div>
             <button
-              type="button"
+              type="submit"
               className="text-white bg-gradient-to-br from-green-400 to-blue-600 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-green-200 dark:focus:ring-green-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
             >
               Generate Response
@@ -122,38 +204,41 @@ function App() {
           </form>
         </div>
       </aside>
-     {!isMobile &&  <div className="h-full bg-black" style={{ width: '33%' }}></div>}
+      {!isMobile && <div className="h-full bg-black" style={{ width: '33%' }}></div>}
       <div className="bg-black" style={{ width: '100%' }}>
-        {/* 
-        <div className="flex items-center flex-col h-full justify-center px-4">
-          <h1 className="text-7xl bg-gradient-to-br from-green-400 to-blue-600 inline-block text-transparent bg-clip-text">
-            Har Post Mein Thoda Tadka
-          </h1>
-          <h2 className="text-6xl text-gray-600">How can I help you today?</h2>
-        </div> */}
-        <div>
-          <div className="container max-h-screen overflow-y-scroll w-screen flex flex-col mt-10 items-center bg-black mx-auto">
-            <div style={{ width: '80%' }}>
-              <div className="flex pt-4">
-                <span className="flex justify-center items-center w-10">
-                  <span className="w-fit text-white flex justify-center items-center px-2">
-                    <svg width="30px" height="30px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <g id="SVGRepo_bgCarrier" strokeWidth="0" />
-                      <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round" />
-                      <g id="SVGRepo_iconCarrier">
-                        <circle cx="12" cy="6" r="4" fill="#45CF8D" />
-                        <path
-                          d="M20 17.5C20 19.9853 20 22 12 22C4 22 4 19.9853 4 17.5C4 15.0147 7.58172 13 12 13C16.4183 13 20 15.0147 20 17.5Z"
-                          fill="#45CF8D"
-                        />
-                      </g>
-                    </svg>
+        {data == null ? (
+          <div className="flex items-center flex-col h-full justify-center px-4">
+            <h1 className="text-7xl bg-gradient-to-br from-green-400 to-blue-600 inline-block text-transparent bg-clip-text">
+              Har Post Mein Thoda Tadka
+            </h1>
+            <h2 className="text-6xl text-gray-600">How can I help you today?</h2>
+          </div>
+        ) : (
+          <div>
+            <div className={`container ${isMobile ? 'w-screen max-h-screen overflow-y-scroll' : ''} flex flex-col mt-10 items-center bg-black mx-auto`}>
+              <div style={{ width: '80%' }}>
+                <div className="flex pt-4">
+                  <span className="flex justify-center items-center w-10">
+                    <span className="w-fit text-white flex justify-center items-center px-2">
+                      <svg width="30px" height="30px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g id="SVGRepo_bgCarrier" strokeWidth="0" />
+                        <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round" />
+                        <g id="SVGRepo_iconCarrier">
+                          <circle cx="12" cy="6" r="4" fill="#45CF8D" />
+                          <path
+                            d="M20 17.5C20 19.9853 20 22 12 22C4 22 4 19.9853 4 17.5C4 15.0147 7.58172 13 12 13C16.4183 13 20 15.0147 20 17.5Z"
+                            fill="#45CF8D"
+                          />
+                        </g>
+                      </svg>
+                    </span>
                   </span>
-                </span>
-                <p className="chat-msg w-fit text-white flex justify-center items-center rounded mx-2 py-1 px-2">
-                  How may i help you?
-                </p>
-              </div>
+                  <p className="chat-msg w-fit text-white flex normal-case justify-center items-center rounded mx-2 py-1 px-2 text">
+                    {`Generating a ${data['post-length'].toLowerCase()} ${data['use-case'].toLowerCase()} about a ${data['topic'].toLowerCase()} topic with an ${data['post-tone'].toLowerCase()} tone.`}
+
+                  </p>
+                </div>
+               
               <div className="flex pt-4">
                 <span className="flex justify-center items-start mt-3 w-10">
                   <span className="w-fit text-white flex justify-center items-start rounded-full px-2">
@@ -206,28 +291,16 @@ function App() {
                         </linearGradient>
                       </defs>
                     </svg>
-
+                    </span>
                   </span>
-                </span>
-                <p className="chat-msg w-fit flex justify-center items-center py-1 px-2 mx-2 text-white">
-                  Lorem ipsum dolor sit, amet consectetur adipisicing elit. Itaque dolor molestias veritatis! Eos, ab
-                  aperiam? Praesentium ipsa eum id labore est repellat atque non excepturi quis qui fugiat quod
-                  asperiores facere autem laborum reiciendis rerum sed voluptatum, ad maxime dolorum ex, eveniet
-                  blanditiis nemo. Dicta officia porro aliquam incidunt! In!Lorem ipsum dolor sit amet consectetur
-                  adipisicing elit. Eveniet ipsa omnis, pariatur laboriosam asperiores esse, obcaecati minima fugiat,
-                  minus ullam eaque. Voluptatem pariatur, sit dicta cum in sint impedit omnis officiis ea facere hic
-                  culpa voluptates repellendus minima corrupti voluptate dolores vel! Modi unde dolorem facilis veniam
-                  explicabo molestias culpa quasi excepturi doloribus suscipit, quia illo. Beatae quam iure voluptatibus
-                  aliquam libero non placeat et eos mollitia ratione est itaque, modi temporibus sit, assumenda corrupti
-                  quas. Magnam non cumque necessitatibus doloribus, reprehenderit quasi aspernatur accusantium aliquam
-                  saepe possimus corporis optio deleniti nisi nihil tempora vero, neque ea? Maiores quidem dolor,
-                  explicabo, veniam sit, illo tenetur eligendi corrupti perspiciatis nobis reiciendis! Numquam, fugit
-                  dolore nisi cupiditate eius repellat ut, aliquam sit non dolorem id deserunt laudantium reiciendis.
-                </p>
+                  <p id="chat-response" className="chat-msg text-white flex justify-center items-center rounded mx-2 py-1 px-2">
+                    {loader &&  <div class="loader  rounded-full mt-5"></div>}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
